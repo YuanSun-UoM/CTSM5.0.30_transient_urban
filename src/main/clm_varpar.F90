@@ -142,7 +142,7 @@ contains
     max_patch_per_col= max(numpft+1, numcft, maxpatch_urb)
 
     nlevsoifl   =  10
-    nlevurb     =  5
+    nlevurb     =  10
     if ( masterproc ) write(iulog, *) 'soil_layerstruct varpar ',soil_layerstruct
     if ( soil_layerstruct == '10SL_3.5m' ) then
        nlevsoi     =  nlevsoifl

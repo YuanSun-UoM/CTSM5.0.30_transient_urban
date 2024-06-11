@@ -383,6 +383,7 @@ contains
 
          tc_ref2m               => humanindex_inst%tc_ref2m_patch               , & ! Output: [real(r8) (:)   ]  2 m height surface air temperature (C)
          vap_ref2m              => humanindex_inst%vap_ref2m_patch              , & ! Output: [real(r8) (:)   ]  2 m height vapor pressure (Pa)
+         vap_ref2m_r            => humanindex_inst%vap_ref2m_r_patch            , & ! Output: [real(r8) (:)   ]  Rural 2 m height vapor pressure (Pa)
          appar_temp_ref2m       => humanindex_inst%appar_temp_ref2m_patch       , & ! Output: [real(r8) (:)   ]  2 m apparent temperature (C)
          appar_temp_ref2m_r     => humanindex_inst%appar_temp_ref2m_r_patch     , & ! Output: [real(r8) (:)   ]  Rural 2 m apparent temperature (C)
          swbgt_ref2m            => humanindex_inst%swbgt_ref2m_patch            , & ! Output: [real(r8) (:)   ]  2 m Simplified Wetbulb Globe temperature (C)
@@ -453,7 +454,7 @@ contains
          t_ref2m                => temperature_inst%t_ref2m_patch               , & ! Output: [real(r8) (:)   ]  2 m height surface air temperature (Kelvin)                           
          t_ref2m_r              => temperature_inst%t_ref2m_r_patch             , & ! Output: [real(r8) (:)   ]  Rural 2 m height surface air temperature (Kelvin)                     
          t_skin_patch           => temperature_inst%t_skin_patch                , & ! Output: [real(r8) (:)   ]  patch skin temperature (K)  
-
+         t_skin_r_patch         => temperature_inst%t_skin_r_patch              , & ! Output: [real(r8) (:)   ]  rural skin temperature (K)  
          frac_h2osfc            => waterstate_inst%frac_h2osfc_col              , & ! Input:  [real(r8) (:)   ]  fraction of surface water                                             
          fwet                   => waterstate_inst%fwet_patch                   , & ! Input:  [real(r8) (:)   ]  fraction of canopy that is wet (0 to 1)                               
          fdry                   => waterstate_inst%fdry_patch                   , & ! Input:  [real(r8) (:)   ]  fraction of foliage that is green and dry [-]                         
@@ -474,6 +475,7 @@ contains
          snounload              => waterstate_inst%snounload_patch              , & ! Output: [real(r8) (:)   ]  canopy snow unloading mass (mm H2O)
 
          q_ref2m                => waterstate_inst%q_ref2m_patch                , & ! Output: [real(r8) (:)   ]  2 m height surface specific humidity (kg/kg)                          
+         q_ref2m_r              => waterstate_inst%q_ref2m_r_patch              , & ! Output: [real(r8) (:)   ]  Rural 2 m height surface specific humidity (kg/kg)
          rh_ref2m_r             => waterstate_inst%rh_ref2m_r_patch             , & ! Output: [real(r8) (:)   ]  Rural 2 m height surface relative humidity (%)                        
          rh_ref2m               => waterstate_inst%rh_ref2m_patch               , & ! Output: [real(r8) (:)   ]  2 m height surface relative humidity (%)                              
          rhaf                   => waterstate_inst%rh_af_patch                  , & ! Output: [real(r8) (:)   ]  fractional humidity of canopy air [dimensionless]                     
@@ -1191,6 +1193,7 @@ contains
          call QSat(t_ref2m(p), forc_pbot(c), e_ref2m, de2mdT, qsat_ref2m, dqsat2mdT)
          rh_ref2m(p) = min(100._r8, q_ref2m(p) / qsat_ref2m * 100._r8)
          rh_ref2m_r(p) = rh_ref2m(p)
+         q_ref2m_r(p) = q_ref2m(p)
 
          ! Human Heat Stress
          if ( all_human_stress_indices .or. fast_human_stress_indices ) then
@@ -1210,6 +1213,7 @@ contains
                call SwampCoolEff(tc_ref2m(p), wb_ref2m(p), swmp80_ref2m(p), swmp65_ref2m(p))
             end if
             wbt_ref2m_r(p)            = wbt_ref2m(p)
+            vap_ref2m_r(p)            = vap_ref2m(p)
             nws_hi_ref2m_r(p)         = nws_hi_ref2m(p)
             appar_temp_ref2m_r(p)     = appar_temp_ref2m(p)
             swbgt_ref2m_r(p)          = swbgt_ref2m(p)
@@ -1244,6 +1248,7 @@ contains
          ! function that goes to zero as LAI (ELAI + ESAI) go to zero.
 
          t_skin_patch(p)  =  emv(p)*t_veg(p)  +  (1._r8 - emv(p))*sqrt(sqrt(lw_grnd))
+         t_skin_r_patch(p) = t_skin_patch(p)
 
          ! Derivative of soil energy flux with respect to soil temperature
 

@@ -223,6 +223,7 @@ contains
 
          tc_ref2m            => humanindex_inst%tc_ref2m_patch              , & ! Output: [real(r8) (:)   ]  2 m height surface air temperature (C)
          vap_ref2m           => humanindex_inst%vap_ref2m_patch             , & ! Output: [real(r8) (:)   ]  2 m height vapor pressure (Pa)
+         vap_ref2m_u         => humanindex_inst%vap_ref2m_u_patch           , & ! Output: [real(r8) (:)   ]  Urban 2 m height vapor pressure (Pa)
          appar_temp_ref2m    => humanindex_inst%appar_temp_ref2m_patch      , & ! Output: [real(r8) (:)   ]  2 m apparent temperature (C)
          appar_temp_ref2m_u  => humanindex_inst%appar_temp_ref2m_u_patch    , & ! Output: [real(r8) (:)   ]  Urban 2 m apparent temperature (C)
          swbgt_ref2m         => humanindex_inst%swbgt_ref2m_patch           , & ! Output: [real(r8) (:)   ]  2 m Simplified Wetbulb Globe temperature (C)
@@ -260,6 +261,7 @@ contains
          h2osoi_liq          =>   waterstate_inst%h2osoi_liq_col            , & ! Input:  [real(r8) (:,:) ]  liquid water (kg/m2)                            
          qaf                 =>   waterstate_inst%qaf_lun                   , & ! Output: [real(r8) (:)   ]  urban canopy air specific humidity (kg/kg)        
          q_ref2m             =>   waterstate_inst%q_ref2m_patch             , & ! Output: [real(r8) (:)   ]  2 m height surface specific humidity (kg/kg)      
+         q_ref2m_u           =>   waterstate_inst%q_ref2m_u_patch           , & ! Output: [real(r8) (:)   ]  Urban 2 m height surface specific humidity (kg/kg)
          rh_ref2m            =>   waterstate_inst%rh_ref2m_patch            , & ! Output: [real(r8) (:)   ]  2 m height surface relative humidity (%)          
          rh_ref2m_u          =>   waterstate_inst%rh_ref2m_u_patch          , & ! Output: [real(r8) (:)   ]  2 m height surface relative humidity (%)          
 
@@ -861,7 +863,7 @@ contains
          call QSat(t_ref2m(p), forc_pbot(g), e_ref2m, de2mdT, qsat_ref2m, dqsat2mdT)
          rh_ref2m(p) = min(100._r8, q_ref2m(p) / qsat_ref2m * 100._r8)
          rh_ref2m_u(p) = rh_ref2m(p)
-
+         q_ref2m_u(p) = q_ref2m(p)
          ! Human Heat Stress
          if ( all_human_stress_indices .or. fast_human_stress_indices )then
             call KtoC(t_ref2m(p), tc_ref2m(p))
@@ -879,7 +881,8 @@ contains
                call THIndex(tc_ref2m(p), wb_ref2m(p), thic_ref2m(p), thip_ref2m(p))
                call SwampCoolEff(tc_ref2m(p), wb_ref2m(p), swmp80_ref2m(p), swmp65_ref2m(p))
             end if
-  
+            
+            vap_ref2m_u(p)            = vap_ref2m(p)
             wbt_ref2m_u(p)            = wbt_ref2m(p)
             nws_hi_ref2m_u(p)         = nws_hi_ref2m(p)
             appar_temp_ref2m_u(p)     = appar_temp_ref2m(p)

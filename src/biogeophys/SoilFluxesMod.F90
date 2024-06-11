@@ -105,6 +105,8 @@ contains
 !         emv                     => temperature_inst%emv_patch              , & ! Input:  [real(r8) (:)   ]  vegetation emissivity
 !         t_veg                   => temperature_inst%t_veg_patch            , & ! Output: [real(r8) (:)   ]  vegetation temperature (Kelvin) 
          t_skin_patch            => temperature_inst%t_skin_patch           , & ! Output: [real(r8) (:)   ]  patch skin temperature (K)
+         t_skin_r_patch          => temperature_inst%t_skin_r_patch         , & ! Output: [real(r8) (:)   ]  rural skin temperature (K)
+         t_skin_u_patch          => temperature_inst%t_skin_u_patch         , & ! Output: [real(r8) (:)   ]  urban skin temperature (K)
          t_h2osfc                => temperature_inst%t_h2osfc_col           , & ! Input:  [real(r8) (:)   ]  surface water temperature               
          tssbef                  => temperature_inst%t_ssbef_col            , & ! Input:  [real(r8) (:,:) ]  soil/snow temperature before update   
          t_h2osfc_bef            => temperature_inst%t_h2osfc_bef_col       , & ! Input:  [real(r8) (:)   ]  saved surface water temperature         
@@ -118,6 +120,7 @@ contains
          htvp                    => energyflux_inst%htvp_col                , & ! Input:  [real(r8) (:)   ]  latent heat of vapor of water (or sublimation) [j/kg]
          eflx_building_heat_errsoi=> energyflux_inst%eflx_building_heat_errsoi_col  , & ! Input: [real(r8) (:)] heat flux to interior surface of walls and roof for errsoi check (W m-2)
          eflx_wasteheat_patch    => energyflux_inst%eflx_wasteheat_patch    , & ! Input:  [real(r8) (:)   ]  sensible heat flux from urban heating/cooling sources of waste heat (W/m**2)
+         eflx_ventilation_patch  => energyflux_inst%eflx_ventilation_patch  , & ! Input:  [real(r8) (:)   ]  sensible heat flux from building ventilation (W/m**2)
          eflx_heat_from_ac_patch => energyflux_inst%eflx_heat_from_ac_patch , & ! Input:  [real(r8) (:)   ]  sensible heat flux put back into canyon due to removal by AC (W/m**2)
          eflx_traffic_patch      => energyflux_inst%eflx_traffic_patch      , & ! Input:  [real(r8) (:)   ]  traffic sensible heat flux (W/m**2)     
          dlrad                   => energyflux_inst%dlrad_patch             , & ! Input:  [real(r8) (:)   ]  downward longwave radiation below the canopy [W/m2]
@@ -302,7 +305,8 @@ contains
             eflx_soil_grnd(p) = sabg(p) + dlrad(p) &
                  - eflx_lwrad_net(p) - eflx_lwrad_del(p) &
                  - (eflx_sh_grnd(p) + qflx_evap_soi(p)*htvp(c) + qflx_tran_veg(p)*hvap) &
-                 + eflx_wasteheat_patch(p) + eflx_heat_from_ac_patch(p) + eflx_traffic_patch(p)
+                 + eflx_wasteheat_patch(p) + eflx_heat_from_ac_patch(p) + eflx_traffic_patch(p) &
+                 + eflx_ventilation_patch(p)
             eflx_soil_grnd_u(p) = eflx_soil_grnd(p)
          end if
 
@@ -420,7 +424,14 @@ contains
 !               t_skin_patch(p) = ((1._r8 - emv(p))*(1-frac_veg_nosno(p)) * sqrt(sqrt(lw_grnd)))  +  &
 !                                           emv(p) *   frac_veg_nosno(p)  * t_veg(p)
 !            end if
-             if(frac_veg_nosno(p).eq.0)  t_skin_patch(p) = sqrt(sqrt(lw_grnd))
+            if(frac_veg_nosno(p).eq.0) then
+               t_skin_patch(p) = sqrt(sqrt(lw_grnd))
+               if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
+                  !-------------------------------------------------------------Where Keer Modified-----------------------------------------------------------
+                  t_skin_r_patch(p) = t_skin_patch(p)
+                  !-------------------------------------------------------------Where Keer Modified----------------------------------------------------------- 
+               end if               
+            end if
 
             eflx_lwrad_net(p) = eflx_lwrad_out(p) - forc_lwrad(c)
             if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
@@ -448,6 +459,7 @@ contains
          c = patch%column(p)
          
          t_skin_patch(p) = t_soisno(c,col%snl(c)+1)
+         t_skin_u_patch(p) = t_skin_patch(p)
   
       end do
 

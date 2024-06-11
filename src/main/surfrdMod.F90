@@ -16,6 +16,7 @@ module surfrdMod
   use clm_varctl      , only : iulog, scmlat, scmlon, single_column
   use clm_varctl      , only : use_cndv, use_crop
   use surfrdUtilsMod  , only : check_sums_equal_1, collapse_crop_types
+  !use surfrdUtilsMod  , only : collapse_to_dominant, collapse_crop_var, collapse_individual_lunits
   use ncdio_pio       , only : file_desc_t, var_desc_t, ncd_pio_openfile, ncd_pio_closefile
   use ncdio_pio       , only : ncd_io, check_var, ncd_inqfdims, check_dim, ncd_inqdid
   use pio
@@ -284,10 +285,16 @@ contains
     !    o real % abundance PFTs (as a percent of vegetated area)
     !
     ! !USES:
-    use clm_varctl  , only : create_crop_landunit
+    use clm_varctl  , only : create_crop_landunit, collapse_urban, &
+                             toosmall_soil, toosmall_crop, toosmall_glacier, &
+                             toosmall_lake, toosmall_wetland, toosmall_urban, &
+                             n_dom_landunits
     use fileutils   , only : getfil
     use domainMod   , only : domain_type, domain_init, domain_clean
     use clm_instur  , only : wt_lunit, topo_glc_mec
+    use landunit_varcon     , only : max_lunit, istsoil, isturb_MIN, isturb_MAX
+    use dynSubgridControlMod, only : get_flanduse_timeseries
+    use dynSubgridControlMod, only : get_do_transient_urban    
     !
     ! !ARGUMENTS:
     integer,          intent(in) :: begg, endg      
@@ -298,6 +305,7 @@ contains
     type(var_desc_t)  :: vardesc              ! pio variable descriptor
     type(domain_type) :: surfdata_domain      ! local domain associated with surface dataset
     character(len=256):: locfn                ! local file name
+    integer, parameter :: n_dom_urban = 1     ! # of dominant urban landunits
     integer           :: n                    ! loop indices
     integer           :: ni,nj,ns             ! domain sizes
     character(len=16) :: lon_var, lat_var     ! names of lat/lon on dataset
@@ -405,11 +413,44 @@ contains
 
     call check_sums_equal_1(wt_lunit, begg, 'wt_lunit', subname)
 
+    ! if collapse_urban = .true.
+    ! collapse urban landunits to the dominant urban landunit
+    !if (collapse_urban) then
+    !   call collapse_to_dominant(wt_lunit(begg:endg,isturb_MIN:isturb_MAX), isturb_MIN, isturb_MAX, begg, endg, n_dom_urban)
+    !end if
+    ! our dynamic urban simulation will set collapse_urban = .false. 
+    !toosmall_* =0.0;  n_dom_landunits=0, which mean doing nothing
+    !so I can comment this out
+    
+        ! Select N dominant landunits
+        ! ---------------------------
+        ! n_dom_landunits set by user in namelist
+        ! Call resembles the surfrd_veg_all call to the same subr that selects
+        ! n_dom_pfts (also set by the user in the namelist)
+        !call collapse_to_dominant(wt_lunit(begg:endg,:), istsoil, max_lunit, &
+        !                          begg, endg, n_dom_landunits)
+        ! Remove landunits using thresholds set by user in namelist
+        ! ---------------------------------------------------------
+        ! Thresholds are set in the namelist parameters toosmall_* in units of %.
+        ! TODO Remove corresponding thresholds from the mksurfdat tool
+        !      Found 2 such cases (had expected to encounter one per landunit):
+        !         mkurbanparCommonMod.F90 MIN_DENS = 0.1 and
+        !         mksurfdat.F90 toosmallPFT = 1.e-10
+        !call collapse_individual_lunits(wt_lunit, begg, endg, toosmall_soil, &
+        !                                toosmall_crop, toosmall_glacier, &
+        !                                toosmall_lake, toosmall_wetland, &
+        !                                toosmall_urban)
+                                            
     if ( masterproc )then
        write(iulog,*) 'Successfully read surface boundary data'
        write(iulog,*)
     end if
-
+    
+    ! read the urbanmask (necessary for initialization of dynamical urban)
+    if (get_do_transient_urban()) then
+        call surfrd_urbanmask(begg, endg)
+    end if
+    
   end subroutine surfrd_get_data
 
 !-----------------------------------------------------------------------
@@ -794,5 +835,60 @@ contains
     call check_sums_equal_1(wt_nat_patch, begg, 'wt_nat_patch', subname)
 
   end subroutine surfrd_veg_dgvm
+
+  !-----------------------------------------------------------------------
+  subroutine surfrd_urbanmask(begg, endg)
+    !
+    ! !DESCRIPTION:
+    ! Reads the urban mask, indicating where urban areas are and will grow
+    ! of the landuse.timeseries file.
+    ! Necessary for the initialization of the urban land units.
+    ! All urban density types will intialize if any type exists or will grow.
+    !
+    ! !USES:
+     use clm_instur           , only : pct_urban_max
+     use dynSubgridControlMod , only : get_flanduse_timeseries
+     use clm_varctl           , only : fname_len
+     use fileutils            , only : getfil
+    !
+    ! !ARGUMENTS:
+    integer,           intent(in)    :: begg, endg
+    !
+    !
+    ! !LOCAL VARIABLES:
+    type(file_desc_t)         :: ncid_dynuse          ! netcdf id for landuse timeseries file
+    character(len=256)        :: locfn                ! local file name
+    character(len=fname_len)  :: fdynuse              ! landuse.timeseries filename
+    logical                   :: readvar
+    !
+    character(len=*), parameter :: subname = 'surfrd_urbanmask'
+    !
+    !-----------------------------------------------------------------------
+
+    ! get filename of landuse_timeseries file
+    fdynuse = get_flanduse_timeseries()
+
+    if (masterproc) then
+       write(iulog,*) 'Attempting to read landuse.timeseries data .....'
+       if (fdynuse == ' ') then
+          write(iulog,*)'fdynuse must be specified'
+          call endrun(msg=errMsg(sourcefile, __LINE__))
+       end if
+    end if
+
+    call getfil(fdynuse, locfn, 0 )
+
+   ! open landuse_timeseries file
+    call ncd_pio_openfile (ncid_dynuse, trim(locfn), 0)
+
+    ! read the urbanmask
+    call ncd_io(ncid=ncid_dynuse, varname='PCT_URBAN_MAX', flag='read', data=pct_urban_max, &
+           dim1name=grlnd, readvar=readvar)
+    if (.not. readvar) call endrun( msg=' ERROR: PCT_URBAN_MAX is not on landuse.timeseries file'//errMsg(sourcefile, __LINE__))
+
+    ! close landuse_timeseries file again
+    call ncd_pio_closefile(ncid_dynuse)
+
+  end subroutine surfrd_urbanmask
 
 end module surfrdMod

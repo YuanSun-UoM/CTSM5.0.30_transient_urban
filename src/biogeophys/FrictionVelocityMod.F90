@@ -39,6 +39,8 @@ module FrictionVelocityMod
      real(r8), pointer, public :: forc_hgt_q_patch (:)   ! patch specific humidity forcing height (10m+z0m+d) (m)
      real(r8), pointer, public :: u10_patch        (:)   ! patch 10-m wind (m/s) (for dust model)
      real(r8), pointer, public :: u10_clm_patch    (:)   ! patch 10-m wind (m/s) (for clm_map2gcell)
+     real(r8), pointer, public :: u10_clm_u_patch  (:)   ! urban 10-m wind (m/s) (for clm_map2gcell)
+     real(r8), pointer, public :: u10_clm_r_patch  (:)   ! rural 10-m wind (m/s) (for clm_map2gcell)       
      real(r8), pointer, public :: va_patch         (:)   ! patch atmospheric wind speed plus convective velocity (m/s)
      real(r8), pointer, public :: vds_patch        (:)   ! patch deposition velocity term (m/s) (for dry dep SO4, NH4NO3)
      real(r8), pointer, public :: fv_patch         (:)   ! patch friction velocity (m/s) (for dust model)
@@ -116,6 +118,8 @@ contains
     allocate(this%forc_hgt_q_patch (begp:endp)) ; this%forc_hgt_q_patch (:)   = nan
     allocate(this%u10_patch        (begp:endp)) ; this%u10_patch        (:)   = nan
     allocate(this%u10_clm_patch    (begp:endp)) ; this%u10_clm_patch    (:)   = nan
+    allocate(this%u10_clm_u_patch  (begp:endp)) ; this%u10_clm_u_patch  (:)   = nan
+    allocate(this%u10_clm_r_patch  (begp:endp)) ; this%u10_clm_r_patch  (:)   = nan    
     allocate(this%va_patch         (begp:endp)) ; this%va_patch         (:)   = nan
     allocate(this%vds_patch        (begp:endp)) ; this%vds_patch        (:)   = nan
     allocate(this%fv_patch         (begp:endp)) ; this%fv_patch         (:)   = nan
@@ -178,6 +182,16 @@ contains
          avgflag='A', long_name='10-m wind', &
          ptr_patch=this%u10_clm_patch)
 
+    this%u10_clm_u_patch(begp:endp) = spval
+    call hist_addfld1d (fname='U10_U', units='m/s', &
+         avgflag='A', long_name='10-m urban wind', &
+         ptr_patch=this%u10_clm_u_patch)
+
+    this%u10_clm_r_patch(begp:endp) = spval
+    call hist_addfld1d (fname='U10_R', units='m/s', &
+         avgflag='A', long_name='10-m rural wind', &
+         ptr_patch=this%u10_clm_r_patch)
+              
     call hist_addfld1d (fname='U10_ICE', units='m/s',  &
          avgflag='A', long_name='10-m wind (ice landunits only)', &
          ptr_patch=this%u10_clm_patch, l2g_scale_type='ice', default='inactive')
@@ -385,6 +399,7 @@ contains
     ! !USES:
     use clm_varcon, only : vkc
     use clm_varctl, only : iulog
+    use landunit_varcon      , only : istsoil, istcrop, isturb_tbd, isturb_hd, isturb_md    
     !
     ! !ARGUMENTS:
     integer  , intent(in)    :: lbn, ubn                 ! pft/landunit array bounds
@@ -413,6 +428,7 @@ contains
     integer  :: f                           ! pft/landunit filter index
     integer  :: n                           ! pft/landunit index
     integer  :: g                           ! gridcell index
+    integer  :: l                           ! landunit index
     integer  :: pp                          ! pfti,pftf index
     real(r8) :: zldis(lbn:ubn)              ! reference height "minus" zero displacement heght [m]
     real(r8) :: zeta(lbn:ubn)               ! dimensionless height used in Monin-Obukhov theory
@@ -448,6 +464,8 @@ contains
          vds              => frictionvel_inst%vds_patch        , & ! Output: [real(r8) (:) ] dry deposition velocity term (m/s) (for SO4 NH4NO3)
          u10              => frictionvel_inst%u10_patch        , & ! Output: [real(r8) (:) ] 10-m wind (m/s) (for dust model)        
          u10_clm          => frictionvel_inst%u10_clm_patch    , & ! Output: [real(r8) (:) ] 10-m wind (m/s)                         
+         u10_clm_u        => frictionvel_inst%u10_clm_u_patch  , & ! Output: [real(r8) (:) ] urban 10-m wind (m/s)  
+         u10_clm_r        => frictionvel_inst%u10_clm_r_patch  , & ! Output: [real(r8) (:) ] rural 10-m wind (m/s)    
          va               => frictionvel_inst%va_patch         , & ! Output: [real(r8) (:) ] atmospheric wind speed plus convective velocity (m/s)
          fv               => frictionvel_inst%fv_patch           & ! Output: [real(r8) (:) ] friction velocity (m/s) (for dust model)
          )
@@ -460,6 +478,7 @@ contains
             g = lun%gridcell(n) 
          else
             g = patch%gridcell(n)  
+            l = patch%landunit(n)
          end if
 
          ! Wind profile
@@ -535,6 +554,11 @@ contains
                   end if
                end if
                va(pp) = um(n)
+               if (lun%itype(n) == istsoil .or. lun%itype(n) == istcrop) then
+                  u10_clm_r(pp)=u10_clm(pp)
+               else if (lun%itype(n) == isturb_tbd .or. lun%itype(n) == isturb_hd .or. lun%itype(n) == isturb_md) then
+                  u10_clm_u(pp)=u10_clm(pp)
+               end if                
             end do
          else
             if (zldis(n)-z0m(n) <= 10._r8) then
@@ -559,6 +583,11 @@ contains
                end if
             end if
             va(n) = um(n)
+            if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
+               u10_clm_r(n)=u10_clm(n)
+            else if (lun%itype(l) == isturb_tbd .or. lun%itype(l) == isturb_hd .or. lun%itype(l) == isturb_md) then
+               u10_clm_u(n)=u10_clm(n)
+            end if             
          end if
 
          ! Temperature profile

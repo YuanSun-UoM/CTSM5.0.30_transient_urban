@@ -24,6 +24,8 @@ module TemperatureType
      ! Temperatures
      real(r8), pointer :: t_veg_patch              (:)   ! patch vegetation temperature (Kelvin)
      real(r8), pointer :: t_skin_patch             (:)   ! patch skin temperature (Kelvin)
+     real(r8), pointer :: t_skin_r_patch           (:)   ! rural skin temperature (Kelvin)
+     real(r8), pointer :: t_skin_u_patch           (:)   ! urban skin temperature (Kelvin)     
      real(r8), pointer :: t_veg_day_patch          (:)   ! patch daytime  accumulative vegetation temperature (Kelvinx*nsteps), LUNA specific, from midnight to current step
      real(r8), pointer :: t_veg_night_patch        (:)   ! patch night-time accumulative vegetation temperature (Kelvin*nsteps), LUNA specific, from midnight to current step
      real(r8), pointer :: t_veg10_day_patch        (:)   ! 10 day running mean of patch daytime time vegetation temperature (Kelvin), LUNA specific, but can be reused
@@ -190,6 +192,8 @@ contains
     ! Temperatures
     allocate(this%t_veg_patch              (begp:endp))                      ; this%t_veg_patch              (:)   = nan
     allocate(this%t_skin_patch             (begp:endp))                      ; this%t_skin_patch             (:)   = nan
+    allocate(this%t_skin_r_patch           (begp:endp))                      ; this%t_skin_r_patch           (:)   = nan
+    allocate(this%t_skin_u_patch           (begp:endp))                      ; this%t_skin_u_patch           (:)   = nan    
     if(use_luna) then
      allocate(this%t_veg_day_patch         (begp:endp))                      ; this%t_veg_day_patch          (:)   = spval
      allocate(this%t_veg_night_patch       (begp:endp))                      ; this%t_veg_night_patch        (:)   = spval
@@ -393,6 +397,16 @@ contains
          avgflag='A', long_name='skin temperature', &
          ptr_patch=this%t_skin_patch, c2l_scale_type='urbans')
 
+    this%t_skin_u_patch(begp:endp) = spval
+    call hist_addfld1d(fname='TSKIN_U', units='K',  &
+         avgflag='A', long_name='urban skin temperature', &
+         ptr_patch=this%t_skin_u_patch, c2l_scale_type='urbans')
+
+    this%t_skin_r_patch(begp:endp) = spval
+    call hist_addfld1d(fname='TSKIN_R', units='K',  &
+         avgflag='A', long_name='skin temperature', &
+         ptr_patch=this%t_skin_r_patch, c2l_scale_type='urbans')
+              
     this%t_grnd_col(begc:endc) = spval
     call hist_addfld1d (fname='TG',  units='K',  &
          avgflag='A', long_name='ground temperature', &
@@ -515,7 +529,12 @@ contains
     call hist_addfld1d (fname='LIQUID_WATER_TEMP1', units='K', &
          avgflag='A', long_name='initial gridcell weighted average liquid water temperature', &
          ptr_lnd=this%liquid_water_temp1_grc, default='inactive')
-
+         
+    this%liquid_water_temp2_grc(begg:endg) = spval
+    call hist_addfld1d (fname='LIQUID_WATER_TEMP2', units='K', &
+         avgflag='A', long_name='grc post land cover change weighted average liquid water temperature (K)', &
+         ptr_lnd=this%liquid_water_temp2_grc, default='inactive')
+              
     this%snot_top_col(begc:endc) = spval
     call hist_addfld1d (fname='SNOTTOPL', units='K', &
          avgflag='A', long_name='snow temperature (top layer)', &
