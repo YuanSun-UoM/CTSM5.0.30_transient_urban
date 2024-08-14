@@ -284,8 +284,7 @@ sub write_transient_timeseries_file {
         my $hrvtypyr = `$scrdir/../../bld/queryDefaultNamelist.pl $queryfilopts $resolhrv -options sim_year='$yr',ssp_rcp=${ssp_rcp}${mkcrop} -var mksrf_fvegtyp -namelist clmexp`;
         chomp( $hrvtypyr );
         printf $fh_landuse_timeseries $dynpft_format, $hrvtypyr, $yr;
-        #my $urbanyr = "/glade/p/cesm/cseg/inputdata/lnd/clm2/rawdata/gao_oneill_urban/historical/urban_properties_GaoOneil_05deg_ThreeClass_".$yr."_cdf5_c20220910.nc";
-        my $urbanyr = "/glade/p/cesm/cseg/inputdata/lnd/clm2/rawdata/gao_oneill_urban/ssp5/urban_properties_GaoOneil_05deg_ThreeClass_ssp5_".$yr."_cdf5_c20220910.nc"; 
+        my $urbanyr = "/glade/scratch/keerzhang/archive/BNU_NoAdjust/05deg_".$yr."_NoAdjust_c20220215.nc";
         chomp( $urbanyr);
         printf $fh_landuse_timeseries $dynpft_format, $urbanyr, $yr; # I hard coded this part just to generate a txt file with urban raw data file locations
         if ( $yr % 100 == 0 ) {                                      # And note that I made no change to the "landuse_timeseries_override_$desc.txt" because I am not sure how to deal with the the 'pft_override' option
