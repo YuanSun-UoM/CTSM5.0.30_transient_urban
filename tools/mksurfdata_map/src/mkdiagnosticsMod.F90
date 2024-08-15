@@ -34,7 +34,7 @@ contains
 ! !IROUTINE: output_diagnostics_area
 !
 ! !INTERFACE:
-subroutine output_diagnostics_area(data_i, data_o, gridmap, name, percent, ndiag, mask_src, frac_dst)
+subroutine output_diagnostics_area(data_i, data_o, gridmap, name, percent, ndiag)
 !
 ! !DESCRIPTION:
 ! Output diagnostics for a field that gives either fraction or percent of grid cell area
@@ -51,8 +51,6 @@ subroutine output_diagnostics_area(data_i, data_o, gridmap, name, percent, ndiag
   character(len=*)  , intent(in) :: name         ! name of field
   logical           , intent(in) :: percent      ! is field specified as percent? (alternative is fraction)
   integer           , intent(in) :: ndiag        ! unit number for diagnostic output
-  integer, intent(in) :: mask_src(:)
-  real(r8), intent(in) :: frac_dst(:)
 !
 ! !REVISION HISTORY:
 ! Author: Bill Sacks
@@ -83,18 +81,6 @@ subroutine output_diagnostics_area(data_i, data_o, gridmap, name, percent, ndiag
      write(6,*) 'ns_o         = ', ns_o
      stop
   end if
-  if (size(frac_dst) /= ns_o) then
-     write(6,*) subname//' ERROR: incorrect size of frac_dst'
-     write(6,*) 'size(frac_dst) = ', size(frac_dst)
-     write(6,*) 'ns_o = ', ns_o
-     call abort()
-  end if
-  if (size(mask_src) /= ns_i) then
-     write(6,*) subname//' ERROR: incorrect size of mask_src'
-     write(6,*) 'size(mask_src) = ', size(mask_src)
-     write(6,*) 'ns_i = ', ns_i
-     call abort()
-  end if
 
   ! Sums on input grid
 
@@ -102,7 +88,7 @@ subroutine output_diagnostics_area(data_i, data_o, gridmap, name, percent, ndiag
   garea_i = 0.
   do ni = 1,ns_i
      garea_i = garea_i + gridmap%area_src(ni)*re**2
-     gdata_i = gdata_i + data_i(ni) * gridmap%area_src(ni) * mask_src(ni) * re**2
+     gdata_i = gdata_i + data_i(ni)*gridmap%area_src(ni)*gridmap%frac_src(ni)*re**2
   end do
 
   ! Sums on output grid
@@ -111,7 +97,7 @@ subroutine output_diagnostics_area(data_i, data_o, gridmap, name, percent, ndiag
   garea_o = 0.
   do no = 1,ns_o
      garea_o = garea_o + gridmap%area_dst(no)*re**2
-     gdata_o = gdata_o + data_o(no) * gridmap%area_dst(no) * frac_dst(no) * re**2
+     gdata_o = gdata_o + data_o(no)*gridmap%area_dst(no)*gridmap%frac_dst(no)*re**2
   end do
 
   ! Correct units
@@ -148,7 +134,7 @@ end subroutine output_diagnostics_area
 ! !IROUTINE: output_diagnostics_continuous
 !
 ! !INTERFACE:
-subroutine output_diagnostics_continuous(data_i, data_o, gridmap, name, units, ndiag, mask_src, frac_dst)
+subroutine output_diagnostics_continuous(data_i, data_o, gridmap, name, units, ndiag)
 !
 ! !DESCRIPTION:
 ! Output diagnostics for a continuous field (but not area, for which there is a different routine)
@@ -165,8 +151,6 @@ subroutine output_diagnostics_continuous(data_i, data_o, gridmap, name, units, n
   character(len=*)  , intent(in) :: name         ! name of field
   character(len=*)  , intent(in) :: units        ! units of field
   integer           , intent(in) :: ndiag        ! unit number for diagnostic output
-  integer, intent(in) :: mask_src(:)
-  real(r8), intent(in) :: frac_dst(:)
 !
 ! !REVISION HISTORY:
 ! Author: Bill Sacks
@@ -197,26 +181,14 @@ subroutine output_diagnostics_continuous(data_i, data_o, gridmap, name, units, n
      write(6,*) 'ns_o         = ', ns_o
      stop
   end if
-  if (size(frac_dst) /= ns_o) then
-     write(6,*) subname//' ERROR: incorrect size of frac_dst'
-     write(6,*) 'size(frac_dst) = ', size(frac_dst)
-     write(6,*) 'ns_o = ', ns_o
-     call abort()
-  end if
-  if (size(mask_src) /= ns_i) then
-     write(6,*) subname//' ERROR: incorrect size of mask_src'
-     write(6,*) 'size(mask_src) = ', size(mask_src)
-     write(6,*) 'ns_i = ', ns_i
-     call abort()
-  end if
 
   ! Sums on input grid
 
   gdata_i = 0.
   gwt_i = 0.
   do ni = 1,ns_i
-     gdata_i = gdata_i + data_i(ni) * gridmap%area_src(ni) * mask_src(ni)
-     gwt_i = gwt_i + gridmap%area_src(ni) * mask_src(ni)
+     gdata_i = gdata_i + data_i(ni)*gridmap%area_src(ni)*gridmap%frac_src(ni)
+     gwt_i = gwt_i + gridmap%area_src(ni)*gridmap%frac_src(ni)
   end do
 
   ! Sums on output grid
@@ -224,8 +196,8 @@ subroutine output_diagnostics_continuous(data_i, data_o, gridmap, name, units, n
   gdata_o = 0.
   gwt_o = 0.
   do no = 1,ns_o
-     gdata_o = gdata_o + data_o(no) * gridmap%area_dst(no) * frac_dst(no)
-     gwt_o = gwt_o + gridmap%area_dst(no) * frac_dst(no)
+     gdata_o = gdata_o + data_o(no)*gridmap%area_dst(no)*gridmap%frac_dst(no)
+     gwt_o = gwt_o + gridmap%area_dst(no)*gridmap%frac_dst(no)
   end do
 
   ! Correct units
@@ -339,7 +311,7 @@ end subroutine output_diagnostics_continuous_outonly
 
 !-----------------------------------------------------------------------
 subroutine output_diagnostics_index(data_i, data_o, gridmap, name, &
-     minval, maxval, ndiag, mask_src, frac_dst)
+     minval, maxval, ndiag)
   !
   ! !DESCRIPTION:
   ! Output diagnostics for an index field: area of each index in input and output
@@ -356,8 +328,6 @@ subroutine output_diagnostics_index(data_i, data_o, gridmap, name, &
   integer            , intent(in) :: minval    ! minimum valid value
   integer            , intent(in) :: maxval    ! minimum valid value
   integer            , intent(in) :: ndiag     ! unit number for diagnostic output
-  integer            , intent(in) :: mask_src(:)
-  real(r8)           , intent(in) :: frac_dst(:)
   !
   ! !LOCAL VARIABLES:
   integer               :: ns_i, ns_o ! sizes of input & output grids
@@ -382,18 +352,6 @@ subroutine output_diagnostics_index(data_i, data_o, gridmap, name, &
      write(6,*) 'ns_o         = ', ns_o
      stop
   end if
-  if (size(frac_dst) /= ns_o) then
-     write(6,*) subname//' ERROR: incorrect size of frac_dst'
-     write(6,*) 'size(frac_dst) = ', size(frac_dst)
-     write(6,*) 'ns_o = ', ns_o
-     call abort()
-  end if
-  if (size(mask_src) /= ns_i) then
-     write(6,*) subname//' ERROR: incorrect size of mask_src'
-     write(6,*) 'size(mask_src) = ', size(mask_src)
-     write(6,*) 'ns_i = ', ns_i
-     call abort()
-  end if
 
   ! Sum areas on input grid
 
@@ -404,7 +362,7 @@ subroutine output_diagnostics_index(data_i, data_o, gridmap, name, &
   do ni = 1, ns_i
      k = data_i(ni)
      if (k >= minval .and. k <= maxval) then
-        garea_i(k) = garea_i(k) + gridmap%area_src(ni) * mask_src(ni) * re**2
+        garea_i(k) = garea_i(k) + gridmap%area_src(ni)*gridmap%frac_src(ni)*re**2
      end if
   end do
 
@@ -417,7 +375,7 @@ subroutine output_diagnostics_index(data_i, data_o, gridmap, name, &
   do no = 1, ns_o
      k = data_o(no)
      if (k >= minval .and. k <= maxval) then
-        garea_o(k) = garea_o(k) + gridmap%area_dst(no) * frac_dst(no) * re**2
+        garea_o(k) = garea_o(k) + gridmap%area_dst(no)*gridmap%frac_dst(no)*re**2
      end if
   end do
 

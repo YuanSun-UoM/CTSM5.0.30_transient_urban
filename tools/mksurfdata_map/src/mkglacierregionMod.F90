@@ -14,7 +14,6 @@ module mkglacierregionMod
   !-----------------------------------------------------------------------
   !
   ! !USES:
-  use shr_kind_mod, only : r8 => shr_kind_r8
   use shr_sys_mod , only : shr_sys_flush
   implicit none
 
@@ -56,8 +55,6 @@ contains
     type(gridmap_type)   :: tgridmap
     type(domain_type)    :: tdomain             ! local domain
     integer, allocatable :: glacier_region_i(:) ! glacier region on input grid
-    real(r8), allocatable :: frac_dst(:)        ! output fractions
-    real(r8), allocatable :: mask_r8(:)  ! float of tdomain%mask
     integer              :: ncid,varid          ! input netCDF id's
     integer              :: ier                 ! error status
     integer              :: max_region          ! max region ID
@@ -75,16 +72,7 @@ contains
     call domain_read(tdomain, datfname)
 
     call gridmap_mapread(tgridmap, mapfname)
-
-    ! Obtain frac_dst
-    allocate(frac_dst(ldomain%ns), stat=ier)
-    if (ier/=0) call abort()
-    call gridmap_calc_frac_dst(tgridmap, tdomain%mask, frac_dst)
-
-    allocate(mask_r8(tdomain%ns), stat=ier)
-    if (ier/=0) call abort()
-    mask_r8 = tdomain%mask
-    call gridmap_check(tgridmap, mask_r8, frac_dst, subname)
+    call gridmap_check(tgridmap, subname)
 
     call domain_checksame(tdomain, ldomain, tgridmap)
 
@@ -112,12 +100,11 @@ contains
          gridmap = tgridmap, &
          src_array = glacier_region_i, &
          dst_array = glacier_region_o, &
-         nodata = 0, &
-         mask_src = tdomain%mask)
+         nodata = 0)
 
     max_region = maxval(glacier_region_i)
     call output_diagnostics_index(glacier_region_i, glacier_region_o, tgridmap, &
-         'Glacier Region ID', 0, max_region, ndiag, mask_src=tdomain%mask, frac_dst=frac_dst)
+         'Glacier Region ID', 0, max_region, ndiag)
 
     ! ------------------------------------------------------------------------
     ! Deallocate dynamic memory & other clean up
@@ -127,8 +114,6 @@ contains
     call domain_clean(tdomain)
     call gridmap_clean(tgridmap)
     deallocate(glacier_region_i)
-    deallocate(frac_dst)
-    deallocate(mask_r8)
 
     write (6,*) 'Successfully made glacier region'
     write (6,*)

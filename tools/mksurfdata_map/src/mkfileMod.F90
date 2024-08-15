@@ -8,9 +8,9 @@ contains
     use shr_kind_mod , only : r8 => shr_kind_r8
     use shr_sys_mod  , only : shr_sys_getenv
     use fileutils    , only : get_filename
-    use mkvarpar     , only : nlevsoi, numrad, numstdpft
+    use mkvarpar     , only : nlevsoi, nlevurb, numrad, numstdpft
     use mkvarctl
-    use mkurbanparMod, only : numurbl, nlevurb
+    use mkurbanparMod, only : numurbl
     use mkglcmecMod  , only : nglcec
     use mkpftMod     , only : mkpftAtt
     use mksoilMod    , only : mksoilAtt
@@ -503,23 +503,6 @@ contains
 
        end if
 
-       if ( outnc_3dglc ) then
-          call ncd_def_spatial_var(ncid=ncid, varname='PCT_GLC_MEC_GIC', xtype=xtype, &
-               lev1name='nglcec', &
-               long_name='percent smaller glaciers and ice caps for each glacier elevation class (% of landunit)', units='unitless')
-
-          call ncd_def_spatial_var(ncid=ncid, varname='PCT_GLC_MEC_ICESHEET', xtype=xtype, &
-               lev1name='nglcec', &
-               long_name='percent ice sheet for each glacier elevation class (% of landunit)', units='unitless')
-
-          call ncd_def_spatial_var(ncid=ncid, varname='PCT_GLC_GIC', xtype=xtype, &
-               long_name='percent ice caps/glaciers (% of landunit)', units='unitless')
-
-          call ncd_def_spatial_var(ncid=ncid, varname='PCT_GLC_ICESHEET', xtype=xtype, &
-               long_name='percent ice sheet (% of landunit)', units='unitless')
-
-       end if
-
        call ncd_def_spatial_var(ncid=ncid, varname='PCT_URBAN', xtype=xtype, &
             lev1name='numurbl', &
             long_name='percent urban for each density type', units='unitless')
@@ -540,14 +523,7 @@ contains
        deallocate(ind1D, ind2D)
 
     else
-       call ncd_def_spatial_var(ncid=ncid, varname='PCT_URBAN', xtype=xtype, &
-            lev1name='numurbl', lev2name='time', &
-            long_name='percent urban for each density type', units='unitless')
 
-       call ncd_def_spatial_var(ncid=ncid, varname='PCT_URBAN_MAX', xtype=xtype, &
-            lev1name='numurbl', &
-            long_name='maximum percent urban for each density type', units='unitless')
-                          
        call harvdata%getFieldsIdx( ind1D, ind2D )
        do j = 1, harvdata%num1Dfields()
           call ncd_def_spatial_var(ncid=ncid, varname=mkharvest_fieldname(ind1D(j),constant=.false.), xtype=xtype, &

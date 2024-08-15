@@ -43,7 +43,7 @@ if ( ! defined($result) ) {
 ** Cannot find perl module \"Build/NamelistDefinition.pm\" from directories: @dirs **
 EOF
 }
-my $nldef_file     = "$scrdir/../../bld/namelist_files/namelist_definition_ctsm.xml";
+my $nldef_file     = "$scrdir/../../bld/namelist_files/namelist_definition_clm4_5.xml";
 
 my $definition = Build::NamelistDefinition->new( $nldef_file );
 
@@ -109,20 +109,17 @@ SYNOPSIS
                                    Default: $opts{'usr_mapdir'}
 
 OPTIONS
-     NOTE: The three critical options are (-years, -glc_nec, and -ssp_rcp) they are marked as such.
-
      -allownofile                  Allow the script to run even if one of the input files
                                    does NOT exist.
      -dinlc [or -l]                Enter the directory location for inputdata 
                                    (default $opts{'csmdata'})
      -debug [or -d]                Do not actually run -- just print out what 
                                    would happen if ran.
-     -dynpft "filename"            Dynamic PFT/harvesting file to use if you have a manual list you want to use
-                                   (rather than create it on the fly, must be consistent with first year)
-                                   (Normally NOT used)
+     -dynpft "filename"            Dynamic PFT/harvesting file to use 
+                                   (rather than create it on the fly) 
+                                   (must be consistent with first year)
      -fast_maps                    Toggle fast mode which doesn't use the large mapping files
      -glc_nec "number"             Number of glacier elevation classes to use (by default $opts{'glc_nec'})
-                                   (CRITICAL OPTION)
      -merge_gis                    If you want to use the glacier dataset that merges in
                                    the Greenland Ice Sheet data that CISM uses (typically
                                    used only if consistency with CISM is important)
@@ -137,8 +134,7 @@ OPTIONS
      -no_surfdata                  Do not output a surface dataset
                                    This is useful if you only want a landuse_timeseries file
      -years [or -y] "years"        Simulation year(s) to run over (by default $opts{'years'}) 
-                                   (can also be a simulation year range: i.e. 1850-2000 or 1850-2100 for ssp_rcp future scenarios)
-                                   (CRITICAL OPTION)
+                                   (can also be a simulation year range: i.e. 1850-2000)
      -help  [or -h]                Display this help.
 
      -rundir "directory"           Directory to run in
@@ -147,8 +143,6 @@ OPTIONS
      -ssp_rcp "scenario-name"      Shared Socioeconomic Pathway and Representative Concentration Pathway Scenario name(s).
                                    "hist" for historical, otherwise in form of SSPn-m.m where n is the SSP number
                                    and m.m is the radiative forcing in W/m^2 at the peak or 2100.
-                                   (normally use thiw with -years 1850-2100)
-                                   (CRITICAL OPTION)
      
      -usrname "clm_usrdat_name"    CLM user data name to find grid file with.
 
@@ -284,11 +278,7 @@ sub write_transient_timeseries_file {
         my $hrvtypyr = `$scrdir/../../bld/queryDefaultNamelist.pl $queryfilopts $resolhrv -options sim_year='$yr',ssp_rcp=${ssp_rcp}${mkcrop} -var mksrf_fvegtyp -namelist clmexp`;
         chomp( $hrvtypyr );
         printf $fh_landuse_timeseries $dynpft_format, $hrvtypyr, $yr;
-        #my $urbanyr = "/glade/p/cesm/cseg/inputdata/lnd/clm2/rawdata/gao_oneill_urban/historical/urban_properties_GaoOneil_05deg_ThreeClass_".$yr."_cdf5_c20220910.nc";
-        my $urbanyr = "/glade/p/cesm/cseg/inputdata/lnd/clm2/rawdata/gao_oneill_urban/ssp5/urban_properties_GaoOneil_05deg_ThreeClass_ssp5_".$yr."_cdf5_c20220910.nc"; 
-        chomp( $urbanyr);
-        printf $fh_landuse_timeseries $dynpft_format, $urbanyr, $yr; # I hard coded this part just to generate a txt file with urban raw data file locations
-        if ( $yr % 100 == 0 ) {                                      # And note that I made no change to the "landuse_timeseries_override_$desc.txt" because I am not sure how to deal with the the 'pft_override' option
+        if ( $yr % 100 == 0 ) {
           print "year: $yr\n";
         }
       }
@@ -320,7 +310,7 @@ sub write_transient_timeseries_file {
 
 sub write_namelist_file {
    my ($namelist_fname, $logfile_fname, $fsurdat_fname, $fdyndat_fname,
-      $glc_nec, $griddata, $gridtype, $map, $datfil, $double,
+      $glc_nec, $griddata, $map, $datfil, $double,
       $all_urb, $no_inlandwet, $vegtyp, $hrvtyp, 
       $landuse_timeseries_text_file, $setnumpft) = @_;
 
@@ -333,7 +323,6 @@ sub write_namelist_file {
 &clmexp
  nglcec           = $glc_nec
  mksrf_fgrid      = '$griddata'
- mksrf_gridtype   = '$gridtype'
  map_fpft         = '$map->{'veg'}'
  map_fglacier     = '$map->{'glc'}'
  map_fglacierregion = '$map->{'glcregion'}'
@@ -376,11 +365,6 @@ EOF
  map_fvic         = '$map->{'vic'}'
  mksrf_fvic       = '$datfil->{'vic'}'
  outnc_vic = .true.
-EOF
-  }
-  if ( $opts{'glc'} ) {
-    print $fh <<"EOF";
- outnc_3dglc = .true.
 EOF
   }
   if ( $opts{'glc'} ) {
@@ -614,7 +598,7 @@ EOF
    my $mkcrop_on  = ",crop='on'";
 
    #
-   # Loop over all resolutions and sim-years listed
+   # Loop over all resolutions listed
    #
    foreach my $res ( @hresols ) {
       #
@@ -626,7 +610,7 @@ EOF
       } else {
 	  $queryopts = "-res $res -csmdata $CSMDATA -silent -justvalue";
       }
-      $queryfilopts = "$queryopts -onlyfiles ";
+      $queryfilopts = "$queryopts -onlyfiles -phys clm4_5 ";
       my $mkcrop = $mkcrop_off;
       my $setnumpft = "";
       $mkcrop    = $mkcrop_on;
@@ -638,7 +622,7 @@ EOF
       #
       # Mapping files
       #
-      my %map; my %hgrd; my %lmsk; my %datfil; my %filnm;
+      my %map; my %hgrd; my %lmsk; my %datfil;
       my $hirespft = "off";
       if ( defined($opts{'hirespft'}) ) {
          $hirespft = "on";
@@ -669,9 +653,8 @@ EOF
          $hgrid = trim($hgrid);
          my $filnm = `$scrdir/../../bld/queryDefaultNamelist.pl $mopts -options type=$typ -var mksrf_filename`;
          $filnm = trim($filnm);
-         $filnm{$typ} = $filnm;
-         $hgrd{$typ}  = $hgrid;
-         $lmsk{$typ}  = $lmask;
+         $hgrd{$typ} = $hgrid;
+         $lmsk{$typ} = $lmask;
 	 if ( $opts{'hgrid'} eq "usrspec" ) {
 	     $map{$typ} = $opts{'usr_mapdir'}."/map_${hgrid}_${lmask}_to_${res}_nomask_aave_da_c${mapdate}\.nc";
 	 } else {
@@ -683,6 +666,15 @@ EOF
          }
          if ( ! defined($opts{'allownofile'}) && ! -f $map{$typ} ) {
             die "ERROR: mapping file for this resolution does NOT exist ($map{$typ}).\n";
+          }
+         my $typ_cmd = "$scrdir/../../bld/queryDefaultNamelist.pl $mkopts -options hgrid=$hgrid,lmask=$lmask,mergeGIS=$merge_gis$mkcrop -var $filnm";
+         $datfil{$typ} = `$typ_cmd`;
+         $datfil{$typ} = trim($datfil{$typ});
+         if ( $datfil{$typ} !~ /[^ ]+/ ) {
+            die "ERROR: could NOT find a $filnm data file for this resolution: $hgrid and type: $typ and $lmask.\n$typ_cmd\n\n";
+         }
+         if ( ! defined($opts{'allownofile'}) && ! -f $datfil{$typ} ) {
+            die "ERROR: data file for this resolution does NOT exist ($datfil{$typ}).\n";
          }
       }
       #
@@ -714,7 +706,7 @@ EOF
       #
       my $double = ".true.";
       #
-      # Loop over each SSP-RCP scenario
+      # Loop over each sim_year
       #
       RCP: foreach my $ssp_rcp ( @rcpaths ) {
          #
@@ -747,34 +739,16 @@ EOF
                $sim_yrn = $2;
                $transient = 1;
             }
-            #
-            # Find the file for each of the types
-            #
-            foreach my $typ ( @typlist ) {
-               my $hgrid = $hgrd{$typ};
-               my $lmask = $lmsk{$typ};
-               my $filnm = $filnm{$typ};
-               my $typ_cmd = "$scrdir/../../bld/queryDefaultNamelist.pl $mkopts -options " . 
-                             "hgrid=$hgrid,lmask=$lmask,mergeGIS=$merge_gis$mkcrop,sim_year=$sim_yr0 -var $filnm";
-               $datfil{$typ} = `$typ_cmd`;
-               $datfil{$typ} = trim($datfil{$typ});
-               if ( $datfil{$typ} !~ /[^ ]+/ ) {
-                  die "ERROR: could NOT find a $filnm data file for this resolution: $hgrid and type: $typ and $lmask.\n$typ_cmd\n\n";
-               }
-               if ( ! defined($opts{'allownofile'}) && ! -f $datfil{$typ} ) {
-                  die "ERROR: data file for this resolution does NOT exist ($datfil{$typ}).\n";
-               }
-            }
             # determine simulation year to use for the surface dataset:
             my $sim_yr_surfdat = "$sim_yr0";
             
-            my $cmd    = "$scrdir/../../bld/queryDefaultNamelist.pl $queryfilopts $resol -options sim_year='${sim_yr_surfdat}'$mkcrop,ssp_rcp=${ssp_rcp}${mkcrop} -var mksrf_fvegtyp -namelist clmexp";
+            my $cmd    = "$scrdir/../../bld/queryDefaultNamelist.pl $queryfilopts $resol -options sim_year='${sim_yr_surfdat}'$mkcrop -var mksrf_fvegtyp -namelist clmexp";
             my $vegtyp = `$cmd`;
             chomp( $vegtyp );
             if ( $vegtyp eq "" ) {
                die "** trouble getting vegtyp file with: $cmd\n";
             }
-            my $cmd    = "$scrdir/../../bld/queryDefaultNamelist.pl $queryfilopts $resolhrv -options sim_year='${sim_yr_surfdat}'$mkcrop,ssp_rcp=${ssp_rcp}${mkcrop} -var mksrf_fvegtyp -namelist clmexp";
+            my $cmd    = "$scrdir/../../bld/queryDefaultNamelist.pl $queryfilopts $resolhrv -options sim_year='${sim_yr_surfdat}'$mkcrop -var mksrf_fvegtyp -namelist clmexp";
             my $hrvtyp = `$cmd`;
             chomp( $hrvtyp );
             if ( $hrvtyp eq "" ) {
@@ -829,18 +803,9 @@ EOF
             print "resolution: $res ssp_rcp=$ssp_rcp sim_year = $sim_year\n";
             print "namelist: $namelist_fname\n";
             
-            my $gridtype;
-            $gridtype = "global";
-            if (index($res, '1x1_') != -1) {
-               $gridtype = "regional";
-            }
-            if (index($res, '5x5_amazon') != -1) {
-               $gridtype = "regional";
-            }
-
             write_namelist_file(
                  $namelist_fname, $logfile_fname, $fsurdat_fname, $fdyndat_fname,
-                 $glc_nec, $griddata, $gridtype, \%map, \%datfil, $double,
+                 $glc_nec, $griddata, \%map, \%datfil, $double,
                  $all_urb, $no_inlandwet, $vegtyp, $hrvtyp, 
                  $landuse_timeseries_text_file, $setnumpft);
 

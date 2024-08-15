@@ -27,8 +27,9 @@
        <li>Number of glacier multiple elevation classes (glc_nec)</li>
        <li>Site specific point name (sitespf_pt)</li>
        <li>Crop model (crop)</li>
+       <li>Irrigation model (irrig) (clm4_0 only)</li>
        <li>Data model forcing source (forcing)</li>
-       <li>Representative concentration pathway for future scenarios (SSP-rcp)</li>
+       <li>Representative concentration pathway for future scenarios (rcp)</li>
        <li>New good wood harvest (newwoodharv)</li>
        <li>CN Spin-up mode (spinup)</li>
        <li>Type of file (type)</li>
@@ -132,6 +133,9 @@
         </xsl:if>
         <xsl:if test="string-length(@crop)>0">
         crop=<xsl:value-of select="@crop"/>
+        </xsl:if>
+        <xsl:if test="string-length(@irrig)>0">
+        irrig=<xsl:value-of select="@irrig"/>
         </xsl:if>
         <xsl:if test="string-length(@spinup)>0">
         spinup=<xsl:value-of select="@spinup"/>

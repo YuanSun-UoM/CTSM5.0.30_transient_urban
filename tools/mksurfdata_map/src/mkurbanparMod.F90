@@ -14,7 +14,6 @@ module mkurbanparMod
 ! !USES:
    use shr_kind_mod, only : r8 => shr_kind_r8
    use shr_sys_mod , only : shr_sys_flush
-   use mkvarctl,     only : ispval
    implicit none
 
    private
@@ -23,18 +22,15 @@ module mkurbanparMod
    public :: mkurbanInit
    public :: mkurban
    public :: mkurbanpar
-   public :: update_max_array_urban
-   
+
    ! The following could be private, but because there are associated test routines in a
    ! separate module, it needs to be public
    public :: normalize_urbn_by_tot
 
 ! !PUBLIC DATA MEMBERS:
    integer :: numurbl           ! number of urban classes
-   integer :: nlevurb = ispval  ! number of urban layers
 
    public :: numurbl
-   public :: nlevurb
 
 ! !PRIVATE DATA MEMBERS:
    ! flag to indicate nodata for index variables in output file:
@@ -84,8 +80,6 @@ subroutine mkurbanInit(datfname)
    call check_ret(nf_open(datfname, 0, ncid), subname)
    call check_ret(nf_inq_dimid (ncid, 'density_class', dimid), subname)
    call check_ret(nf_inq_dimlen (ncid, dimid, numurbl), subname)
-   call check_ret(nf_inq_dimid (ncid, 'nlevurb', dimid), subname)
-   call check_ret(nf_inq_dimlen (ncid, dimid, nlevurb), subname)
    call check_ret(nf_close(ncid), subname)
 
 end subroutine mkurbanInit
@@ -159,7 +153,6 @@ subroutine mkurban(ldomain, mapfname, datfname, ndiag, zero_out, &
    real(r8), allocatable :: urbn_classes_gcell_i(:,:) ! input grid: percent urban in each density class
                                                       ! (% of total grid cell area)
    real(r8), allocatable :: urbn_classes_gcell_o(:,:) ! output grid: percent urban in each density class
-   real(r8), allocatable :: frac_dst(:)               ! output fractions
                                                       ! (% of total grid cell area)
    integer , allocatable :: region_i(:)               ! input grid: region ID
    integer  :: ni,no,ns,k                             ! indices
@@ -182,12 +175,8 @@ subroutine mkurban(ldomain, mapfname, datfname, ndiag, zero_out, &
 
    allocate(urbn_classes_gcell_i(ns, numurbl), &
             urbn_classes_gcell_o(ldomain%ns, numurbl), &
-            frac_dst(ldomain%ns), &
             stat=ier)
    if (ier/=0) call abort()
-
-   ! Obtain frac_dst
-   call gridmap_calc_frac_dst(tgridmap, tdomain%mask, frac_dst)
 
    write (6,*) 'Open urban file: ', trim(datfname)
    call check_ret(nf_open(datfname, 0, ncid), subname)
@@ -196,7 +185,7 @@ subroutine mkurban(ldomain, mapfname, datfname, ndiag, zero_out, &
 
    ! Determine % urban by density class on the output grid
    do k = 1, numurbl
-      call mkurban_pct(ldomain, tdomain, tgridmap, urbn_classes_gcell_i(:,k), urbn_classes_gcell_o(:,k), frac_dst)
+      call mkurban_pct(ldomain, tdomain, tgridmap, urbn_classes_gcell_i(:,k), urbn_classes_gcell_o(:,k))
    end do
 
    ! Determine total % urban
@@ -232,7 +221,7 @@ subroutine mkurban(ldomain, mapfname, datfname, ndiag, zero_out, &
    do k = 1, numurbl
       call mkurban_pct_diagnostics(ldomain, tdomain, tgridmap, &
            urbn_classes_gcell_i(:,k), urbn_classes_gcell_o(:,k), &
-           ndiag, dens_class=k, frac_dst=frac_dst)
+           ndiag, dens_class=k)
    end do
 
    write (6,*) 'Successfully made %urban'
@@ -271,7 +260,7 @@ subroutine mkurban(ldomain, mapfname, datfname, ndiag, zero_out, &
 
    ! Determine dominant region for each output cell
 
-   call get_dominant_indices(tgridmap, region_i, region_o, 1, max_region, index_nodata, mask_src=tdomain%mask)
+   call get_dominant_indices(tgridmap, region_i, region_o, 1, max_region, index_nodata)
 
    write (6,*) 'Successfully made urban region'
    write (6,*)
@@ -279,14 +268,14 @@ subroutine mkurban(ldomain, mapfname, datfname, ndiag, zero_out, &
    ! Output diagnostics
 
    call output_diagnostics_index(region_i, region_o, tgridmap, 'Urban Region ID', &
-        1, max_region, ndiag, mask_src=tdomain%mask, frac_dst=frac_dst)
+        1, max_region, ndiag)
 
    ! Deallocate dynamic memory & other clean up
 
    call check_ret(nf_close(ncid), subname)
    call domain_clean(tdomain)
    call gridmap_clean(tgridmap)
-   deallocate (urbn_classes_gcell_i, urbn_classes_gcell_o, region_i, frac_dst)
+   deallocate (urbn_classes_gcell_i, urbn_classes_gcell_o, region_i)
   
 end subroutine mkurban
 !-----------------------------------------------------------------------
@@ -756,31 +745,5 @@ contains
 
 end subroutine mkurbanpar
 !------------------------------------------------------------------------------
-
-!-----------------------------------------------------------------------
-subroutine update_max_array_urban(pct_urbmax_arr,pct_urban_arr)
-  !
-  ! !DESCRIPTION:
-  ! Update the maximum percent cover of each urban class for landuse.timeseries file
-  ! 
-  ! !ARGUMENTS:
-  real(r8)         , intent(inout):: pct_urbmax_arr(:,:)           ! max percent cover of each urban class
-  real(r8)         , intent(in):: pct_urban_arr(:,:)           ! percent cover of each urban class that is used to update the old pct_urbmax_arr
-  !
-  ! !LOCAL VARIABLES:
-  integer :: n,k,ns              ! indices
-
-  character(len=*), parameter :: subname = 'update_max_array_urban'
-  !-----------------------------------------------------------------------
-  ns = size(pct_urban_arr,1)
-  do n = 1, ns
-     do k =1, numurbl
-        if (pct_urban_arr(n,k) > pct_urbmax_arr(n,k)) then 
-           pct_urbmax_arr(n,k) = pct_urban_arr(n,k)
-        end if
-     end do
-  end do
-
-end subroutine update_max_array_urban
 
 end module mkurbanparMod
