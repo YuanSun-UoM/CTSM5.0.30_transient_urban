@@ -126,7 +126,8 @@ subroutine mkpeat(ldomain, mapfname, datfname, ndiag, peat_o)
      stop
   end if
   
-  call output_diagnostics_area(data_i, peat_o, tgridmap, "Peat", percent=.false., ndiag=ndiag, mask_src=tdomain%mask, frac_dst=frac_dst)
+  call output_diagnostics_area(data_i, peat_o, tgridmap, "Peat", &
+       percent=.false., ndiag=ndiag, mask_src=tdomain%mask, frac_dst=frac_dst)
   
   ! -----------------------------------------------------------------
   ! Close files and deallocate dynamic memory

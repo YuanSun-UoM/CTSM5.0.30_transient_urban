@@ -861,7 +861,8 @@ subroutine mkorganic(ldomain, mapfname, datfname, ndiag, organic_o)
   call gridmap_calc_frac_dst(tgridmap, tdomain%mask, frac_dst)
 
   do lev = 1,nlay
-     call gridmap_areaave_srcmask(tgridmap, organic_i(:,lev), organic_o(:,lev), nodata=0._r8, mask_src=tdomain%mask, frac_dst=frac_dst)
+     call gridmap_areaave_srcmask(tgridmap, organic_i(:,lev), organic_o(:,lev), &
+     nodata=0._r8, mask_src=tdomain%mask, frac_dst=frac_dst)
   end do
 
   do lev = 1,nlevsoi

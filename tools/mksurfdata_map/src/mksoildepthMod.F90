@@ -149,7 +149,8 @@ subroutine mksoildepth(ldomain, mapfname, datfname, ndiag, soildepth_o)
      stop
   end if
   
-  call output_diagnostics_area(data_i, soildepth_o, tgridmap, "Soildepth", percent=.false., ndiag=ndiag, mask_src=tdomain%mask, frac_dst=frac_dst)
+  call output_diagnostics_area(data_i, soildepth_o, tgridmap, "Soildepth", &
+       percent=.false., ndiag=ndiag, mask_src=tdomain%mask, frac_dst=frac_dst)
   
   ! -----------------------------------------------------------------
   ! Close files and deallocate dynamic memory
