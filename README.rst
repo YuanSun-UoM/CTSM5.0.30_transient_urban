@@ -11,10 +11,10 @@ source /work/n02/n02/yuansun/shell_scripts/archive/port_cesm/setup/setup_ctsm50.
 cd /work/n02/n02/yuansun/cesm/my_cesm_sandbox_CLM50_mksurfdata
 
 # modify Externals.cfg
-local_path = cime
+tag = maint-5.6
 protocol = git
 repo_url = https://github.com/ESMCI/cime
-tag = cime5.6.28
+local_path = cime
 required = True
 
 ./manage_externals/checkout_externals
@@ -52,9 +52,13 @@ gmake USER_FC=gfortran USER_CC=gcc USER_FFLAGS="-fallow-argument-mismatch -fallo
 # if gmake fails, use 'gmake clean' to clean up the object files and then recompile
 
 # after gmake, the execuatble file is in ${TOOL}/mksurfdata_map 
-cd ${TOOL}/mkmapdata
-export GRID=${CESM}/cesm_inputdata/lnd/clm2/mappingdata/maps/0.9x1.25/map_0.25x0.25_nomask_to_0.9x1.25_nomask_aave_da_c200309.nc
-./mkmapdata.sh -f ${GRID} -res 0.9x1.25nomask -type global
+# export GRID=${CESM}/cesm_inputdata/lnd/clm2/mappingdata/maps/0.9x1.25/map_0.25x0.25_nomask_to_0.9x1.25_nomask_aave_da_c200309.nc
+cd ${TOOL}/mksurfdata_map
+
+# modify mksurfdata.pl, the input path:
+# my $CSMDATA = "/work/n02/n02/yuansun/cesm/cesm_inputdata";
+# my $urbanyr = "/work/n02/n02/yuansun/cesm/cesm_inputdata/lnd/rawdata/gao_oneill_urban/ssp3/urban_properties_GaoOneil_05deg_ThreeClass_ssp3_".$yr."_cdf5_c20220910.nc";
+./mksurfdata.pl -res 0.9x1.25 -ssp_rcp SSP3-7.0 -glc_nec 10 -years 2015-2100
 ```
 
 
