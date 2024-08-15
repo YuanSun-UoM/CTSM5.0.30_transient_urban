@@ -69,9 +69,10 @@ cd ${TOOL}/mksurfdata_map
 # modify mksurfdata.pl, the input path:
 # my $CSMDATA = "/work/n02/n02/yuansun/cesm/cesm_inputdata";
 # my $urbanyr = "/work/n02/n02/yuansun/cesm/cesm_inputdata/lnd/rawdata/gao_oneill_urban/ssp3/urban_properties_GaoOneil_05deg_ThreeClass_ssp3_".$yr."_cdf5_c20220910.nc";
-./mksurfdata.pl -res 0.9x1.25 -ssp_rcp SSP3-7.0 -glc_nec 10 -years 2000-2100
+./mksurfdata.pl -res 0.9x1.25 -ssp_rcp SSP3-7.0 -glc_nec 10 -years 2015-2100
 
 
+# download urban raw data from 2015-2100
 ```
 
 ### Error
