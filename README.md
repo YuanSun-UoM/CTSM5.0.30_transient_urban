@@ -72,7 +72,7 @@ cd ${TOOL}/mksurfdata_map
 ./mksurfdata.pl -res 0.9x1.25 -ssp_rcp SSP3-7.0 -glc_nec 10 -years 2015-2100
 
 
-# download urban raw data from 2015-2100
+# download urban and land rawdata from 2015-2100
 ```
 
 ### Error
