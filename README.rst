@@ -54,7 +54,7 @@ gmake USER_FC=gfortran USER_CC=gcc USER_FFLAGS="-fallow-argument-mismatch -fallo
 # after gmake, the execuatble file is in ${TOOL}/mksurfdata_map 
 cd ${TOOL}/mkmapdata
 export GRID=${CESM}/cesm_inputdata/lnd/clm2/mappingdata/maps/0.9x1.25/map_0.25x0.25_nomask_to_0.9x1.25_nomask_aave_da_c200309.nc
-./mkmapdata.sh -f ${GRID} -res <res> -type global
+./mkmapdata.sh -f ${GRID} -res 0.9x1.25nomask -type global
 ```
 
 
