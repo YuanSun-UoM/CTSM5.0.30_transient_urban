@@ -89,3 +89,14 @@ cd ${TOOL}/mksurfdata_map
 # 添加2015-2100
 ```
 
+## difference between revised mksurfdata_map and mksurfdata_esmf
+
+**Learn for Keer:**
+
+I think the difference is not due to floating number accumulated errors. When generating surface data, the "mksurfdata_map (old version)" and the "mksurfdara_esmf (new version)" use different methods to reconcile the percent fractions of all land cover types. So I think it is expected that they will produce different land fractions even with the same input raw data.
+
+For example, after reading the raw data of all land types, the mksurfdata_map adds up the percent fractions of lake, wetland, urban, and glaciers first. If their sum exceeds 100%, the fractions of the four land types will be scaled down proportionally (see[ here [github.com\]](https://urldefense.com/v3/__https://github.com/YuanSun-UoM/CTSM5.0.30_transient_urban/blob/2b0396bb19c7235c547082acb57636ab2a33daf9/tools/mksurfdata_map/src/mksurfdat.F90*L741-L752__;Iw!!PDiH4ENfjr2_Jw!DvfP10lTdOCoLcvDazjp5XGmJ_VE5MU6001pt4H7g5mYSYhnfe1IbkKds_tuYONvY36HiqMEGxYrzT0j6kp9nzFLtODvMX9ju8FG0w$)). However, the mksurfdara_esmf adds up the percent fractions of lake, wetland, urban, glacier, and crop, and checks if their sum exceeds 100% ([here [github.com\]](https://urldefense.com/v3/__https://github.com/ESCOMP/CTSM/blob/1653e409dc2c537bd340072846f456c14b68a3f0/tools/mksurfdata_esmf/src/mksurfdata.F90*L1232-L1242__;Iw!!PDiH4ENfjr2_Jw!DvfP10lTdOCoLcvDazjp5XGmJ_VE5MU6001pt4H7g5mYSYhnfe1IbkKds_tuYONvY36HiqMEGxYrzT0j6kp9nzFLtODvMX87cZ5N9g$)).
+
+Also, the mksurfdara_esmf considers PCT_OCN, but mksurfdata_map doesn't. I wonder if this will change the PCT_URB of coastal grids. These are just two differences between the two tools. It would be difficult to summarize all of their differences. I would recommend you compare the mksurfdat.F90 of the two versions to better understand why they produce different results. 
+
+![difference](/Users/user/Desktop/YuanSun-UoM/CTSM5.0.30_transient_urban/difference.png)
