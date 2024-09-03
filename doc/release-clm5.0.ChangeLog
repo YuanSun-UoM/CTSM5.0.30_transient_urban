@@ -1,4 +1,477 @@
 ===============================================================
+Tag name:  release-clm5.0.35
+Originator(s):  erik (Erik Kluzek,UCAR/TSS,303-497-1326)
+Date: Tue Feb  8 16:09:57 MST 2022
+One-line Summary: Add SSP3-7.0 extension, and SMYLE 1850 and transient, compsets and use-cases
+
+Purpose of this version:
+------------------------
+
+Update externals for cism and cime to cesm2.1.4-rc-10. cime update was needed to run on izumi.
+iAdds a compset for the smyle L83 model (both 1850 and transient). BWsc1850smyle (jedwards4b)
+Add SSP3-7.0 extension compset and use-case, that runs for fixed 2100 conditions with 2100 landuse
+and 2100 harvest and fertilizer.
+
+Update Nitrogen-deposition datasets with files created from WACCM simulations for SSP scenarios (SSP3-7.0,
+SSP5-3.4, and SSP5-8.5).
+
+Fix several issues.
+
+
+CTSM Master Tag This Corresponds To:
+
+Summary of changes:
+-------------------
+
+Issues fixed (include CTSM Issue #):
+    Fixes #1197 SMYLE use-case setup 
+    Fixes #1633 2100 to 2500 Extension compset for SSP3-7.0
+    Fixes #1632 Missing ndep file to 2100 for SSP5-3.4
+    Fixes #1631 ndep file for SSP2-4.5 is incorrect
+    Fixes #1578 Need to replace SSP370 ndep file with new one 
+    Fixes #1131 Nitrogen Deposition file for SSP534OS
+    Fixes #1093 Problems with running fates_next_api/release-clm5.0 on izumi 
+    Fixes #1036 ne30np4 1850 case fails because the fsurdat file is incorrect.
+    Fixes #738  Totvegc threshold used to zero out soil carbon upon exit_spinup needs to be revisited
+
+Science changes since:  release-clm5.0.34
+  Increase totvegcthresh to 1.0 to provide more seed Carbon to PFT's that may have died in AD spinup mode
+  Update Nitorogen Deposition files for several SSP cases
+
+Software changes since:  release-clm5.0.34
+  Add tests for new use-cases
+
+Changes to User Interface since: 
+  New 2100_SSP3-7.0_control use-case and ISSP370ExtClm50BgcCrop compset
+  New 20thC_smyle_transient and 1850_smyle_control use-cases
+
+Testing:
+--------
+
+ [PASS means all tests PASS and OK means tests PASS other than expected fails.]
+
+  build-namelist tests:
+
+    cheyenne - PASS (30 different because of updates)
+
+  unit-tests (components/clm/src):
+
+    cheyenne - PASS
+
+  tools-tests (components/clm/test/tools):
+
+    cheyenne - OK
+
+  PTCLM testing (components/clm/tools/shared/PTCLM/test):
+
+     cheyenne - OK
+
+  regular tests (aux_clm):
+
+    cheyenne_intel ---- OK
+    cheyenne_gnu ------ OK
+    izumi_nag --------- OK
+    izumi_pgi --------- OK
+    izumi_intel ------- PASS
+
+  fates tests (fates):
+
+    cheyenne_intel ---- OK
+    cheyenne_gnu ------ PASS
+    izumi_nag --------- OK
+    izumi_pgi --------- OK
+    izumi_intel ------- PASS
+
+Summary of Answer changes:
+-------------------------
+
+If the tag used for baseline comparisons was NOT the previous tag, note that here: previous
+
+Changes answers relative to baseline: Yes, only for some SSP cases and for AD spinup
+
+  Summarize any changes to answers, i.e.,
+    - what code configurations: AD spinup mode, and SSP3-7.0, SSP2-4.5 and SSP5-3.4 because of ndep files
+    - what platforms/compilers: All
+    - nature of change:
+       SSP cases are different because of update Nitrogen Deposition files
+       Gives more seed Carbon to PFT's that may have died
+
+  Will new REFCASES need to be made for cesm and/or CAM?: No
+  (This will likely be true if the LII tests failed)
+
+Detailed list of changes:
+------------------------
+
+Externals being used: (update cism, cime, and PTCLM)
+
+   cism:   cism-release-cesm2.1.2_02
+   rtm:    release-cesm2.0.04
+   mosart: release-cesm2.0.04
+   cime:   cim5.6.39
+   FATES:  sci.1.30.0_api.8.0.0
+   PTCLM:  PTCLM2_20200902
+
+CTSM Tag versions pulled over from master development branch: None
+
+Pull Requests that document the changes (include PR ids):
+(https://github.com/ESCOMP/ctsm/pull)
+   #1614 -- add smyle L83 compset and SSP3-7.0 extension (jedwards4b)
+
+===============================================================
+===============================================================
+Tag name:  release-clm5.0.34
+Originator(s):  erik (Erik Kluzek,UCAR/TSS,303-497-1326)
+Date: Mon Apr 20 22:08:42 MDT 2020
+One-line Summary: Update documentation for release-clm5.0 branch, and fix issues with no-anthro surface dataset creation
+
+Purpose of this version:
+------------------------
+
+Fix the issues with the no-anthro surface dataset creation (the PtVg simulation year). This 
+makes sure GDP and urban is set to zero and abm to missing for this case. Also bring in the python3
+fix that was intended for the last release tag.
+
+CTSM Master Tag This Corresponds To: ctsm1.0.dev025 (with many other changes)
+
+Summary of changes:
+-------------------
+
+Issues fixed (include CTSM Issue #): #980 #974
+  Fixes #980 -- PtVg option to mksurfdata should also set urban, and GDP to zero, as well as abm to missing
+  Fixes #974 -- Python 3 problem in SSP test
+
+Science changes since: release-clm5.0.33
+  For Potential vegetation sim_year set urban to zero, GDP to zero and abm to missing with mksurfdata.pl
+
+Software changes since: release-clm5.0.33
+  Fix python3 issue for testing in ssp.py
+
+Changes to User Interface since: release-clm5.0.33
+
+Testing:
+--------
+
+ [PASS means all tests PASS and OK means tests PASS other than expected fails.]
+
+  build-namelist tests:
+
+    cheyenne - PASS
+
+  unit-tests (components/clm/src):
+
+    cheyenne - PASS
+    izumi ---- PASS
+
+  tools-tests (components/clm/test/tools):
+
+    cheyenne - OK
+    izumi ---- OK
+
+  PTCLM testing (components/clm/tools/shared/PTCLM/test): None
+
+  regular tests (aux_clm): None
+
+Summary of Answer changes:
+-------------------------
+
+If the tag used for baseline comparisons was NOT the previous tag, note that here: previous
+
+Changes answers relative to baseline: No bit-for-bit (other than PtVg surface dataset creation)
+
+Detailed list of changes:
+------------------------
+
+Externals being used: No updates
+
+   cism:   cism-release-cesm2.1.2_04
+   rtm:    release-cesm2.0.04
+   mosart: release-cesm2.0.04
+   cime:   cim5.6.33
+   FATES:  sci.1.30.0_api.8.0.0
+   PTCLM:  PTCLM2_20200121
+
+CTSM Tag versions pulled over from master development branch: None
+
+Pull Requests that document the changes (include PR ids): #976 #986
+(https://github.com/ESCOMP/ctsm/pull)
+
+   #976 -- bring documentation to release branch
+   #986 -- Fix issues with no-atnthro surface dataset creation
+
+===============================================================
+===============================================================
+Tag name:  release-clm5.0.33
+Originator(s):  erik (Erik Kluzek)
+Date: Tue Apr  7 13:21:28 MDT 2020
+One-line Summary: Turn irrigation on for 2300 SSP extensions
+
+Purpose of this version:
+------------------------
+
+Irrigation was turned off for the 2300 extensions. This turns it on. Also add SSP2-4.5 to the
+anomaly forcing script.
+
+CTSM Master Tag This Corresponds To: ctsm1.0.dev025 (with many other changes)
+
+Summary of changes:
+-------------------
+
+Issues fixed (include CTSM Issue #): #974 #972 #966
+  #974 -- Python3 problem in SSP test
+  #972 -- Irrigate is turned off for the 2300 extensions
+  #966 -- Units for a few history fields needs to change for ILAMB
+
+Science changes since: release-clm5.0.32
+  Irrigation is now properly turned on for the 2100-2300 SSP extensions
+  Change some units of history fields
+
+Software changes since: release-clm5.0.32
+  Anomaly forcing script can now do SSP2-4.5
+  Small changes to anomoly forcing script and singlept script
+
+Changes to User Interface since: release-clm5.0.32
+
+Testing:
+--------
+
+ [PASS means all tests PASS and OK means tests PASS other than expected fails.]
+
+  build-namelist tests:
+
+    cheyenne - PASS (two tests are different than before because of irrigate)
+
+  unit-tests (components/clm/src):
+
+    cheyenne - PASS
+
+  tools-tests (components/clm/test/tools): None
+
+  PTCLM testing (components/clm/tools/shared/PTCLM/test): None
+
+  regular tests (aux_clm):
+
+    cheyenne_intel ---- OK
+    cheyenne_gnu ------ OK
+    izumi_nag --------- PASS
+    izumi_pgi --------- PASS
+    izumi_intel ------- PASS
+
+Summary of Answer changes:
+-------------------------
+
+If the tag used for baseline comparisons was NOT the previous tag, note that here: previous
+
+Changes answers relative to baseline:
+
+  Summarize any changes to answers, i.e.,
+    - what code configurations:
+    - what platforms/compilers: All
+    - nature of change: Climate changing as irrigation is on
+
+  Will new REFCASES need to be made for cesm and/or CAM?: No
+  (This will likely be true if the LII tests failed)
+
+Detailed list of changes:
+------------------------
+
+Externals being used: No updates
+
+   cism:   cism-release-cesm2.1.2_04
+   rtm:    release-cesm2.0.04
+   mosart: release-cesm2.0.04
+   cime:   cim5.6.33
+   FATES:  sci.1.30.0_api.8.0.0
+   PTCLM:  PTCLM2_20200121
+
+CTSM Tag versions pulled over from master development branch: None
+
+Pull Requests that document the changes (include PR ids): #975
+(https://github.com/ESCOMP/ctsm/pull)
+  #975 -- fix irrigate for 2300 extensions
+
+===============================================================
+===============================================================
+Tag name:  release-clm5.0.32
+Originator(s):  erik (Erik Kluzek)
+Date: Thu Apr  2 00:23:04 MDT 2020
+One-line Summary: Extensions to 2300 for SSP5-8.5,SSP5-3.4, and SSP1-2.6
+
+Purpose of this version:
+------------------------
+
+Add 2100 surface datasets, landuse.timeseries files for 2100-2300 for SSP5-3.4, SSP5-8.5, and SSP1-2.6. 
+Also add compsets to run them and the build-namelist use-cases for them. Only for f09 resolution with crop on.
+
+Updates cime as a cime update was needed to run the extensions in I compsets (for presaero and CO2). 
+Add a test for it. Add -ignore_warnings to cmip6_waccm_deck user-mod which is required for the 
+fully coupled compset for BWSSP534osext as the ndep file doesn't exist for it, but WACCM is 
+providing ndep. Get more of the build-namelist unit tester tests working, which previously weren't running.
+
+CTSM Master Tag This Corresponds To: ctsm1.0.dev025 (with many other changes)
+
+Summary of changes:
+-------------------
+
+Issues fixed (include CTSM Issue #): #944, #955
+   Fixes #944 -- extensions to 2300
+   Fixes #955 -- surface dataset creation bug for 2100
+
+Science changes since: release-clm5.0.31
+   Add 2100 surface datasets and transient extensions from 2100-2300
+
+Software changes since: release-clm5.0.31
+   Fix bug with creation of 2100 surface datasets
+
+Changes to User Interface since: release-clm5.0.31
+
+   New compsets: ISSP585ExtClm50BgcCrop, ISSP534xtClm50BgcCrop, ISSP126ExtClm50BgcCrop
+   New CLM_NML_USE_CASE: 2100-2300_SSP5-8.5_transient, 2100-2300_SSP5-3.4_transient, 2100-2300_SSP1-2.6_transient
+
+Testing:
+--------
+
+ [PASS means all tests PASS and OK means tests PASS other than expected fails.]
+
+  build-namelist tests:
+
+    cheyenne - PASS
+
+  unit-tests (components/clm/src):
+
+    cheyenne - PASS
+
+  tools-tests (components/clm/test/tools): None
+
+  PTCLM testing (components/clm/tools/shared/PTCLM/test): None
+
+  regular tests (aux_clm):
+
+    cheyenne_intel ---- OK
+    cheyenne_gnu ------ OK
+    izumi_nag --------- PASS
+    izumi_pgi --------- PASS
+    izumi_intel ------- PASS
+
+Summary of Answer changes:
+-------------------------
+
+If the tag used for baseline comparisons was NOT the previous tag, note that here: previous
+
+Changes answers relative to baseline: No (bit-for-bit)
+
+Detailed list of changes:
+------------------------
+
+Externals being used: cime updated
+
+   cism:   cism-release-cesm2.1.2_04
+   rtm:    release-cesm2.0.04
+   mosart: release-cesm2.0.04
+   cime:   cim5.6.33
+   FATES:  sci.1.30.0_api.8.0.0
+   PTCLM:  PTCLM2_20200121
+
+CTSM Tag versions pulled over from master development branch: None
+
+Pull Requests that document the changes (include PR ids): #959
+(https://github.com/ESCOMP/ctsm/pull)
+   #959 -- Add surface datasets/landuse-timeseries/compsets/use-cases for extensions to 2300
+
+===============================================================
+===============================================================
+Tag name:  release-clm5.0.31
+Originator(s):  erik (Erik Kluzek)
+Date: Sun Mar 29 15:09:19 MDT 2020
+One-line Summary: Bring in raw datasets for 2100-2300 extension for SSP5-8.5/3.5 and SSP1-2.6, some other misc. changes
+
+Purpose of this version:
+------------------------
+
+New Raw datasets to 2300 for SSP1-2.6, SSP5-3.4 and SSP5-8.5.
+Fix the pgi build on izumi.  Bring in anomaly forcing script to create af forcing that can be used by datm
+to run anomoly forcing to get SSP like forcing.  Update manage_externals that fixes the python 3.8 bug.
+
+Update cime and cism-wrapper.
+
+
+CTSM Master Tag This Corresponds To: ctsm1.0.dev025 (with many other changes)
+
+Summary of changes:
+-------------------
+
+Issues fixed (include CTSM Issue #): #921 #922 #933 #946
+
+  Fixes #921 -- PGI build
+  Sets up the script to use for #922
+  Fixes #933 -- Notes about creating SSP landuse files
+  Fixes #946 -- Better error message for missing ndep files
+
+Science changes since: release-clm5.0.30
+  Raw datasets for the 2100-2300 extenstion for SSP1-2.6, SSP5-3.4 and SSP5-8.5
+
+Software changes since: release-clm5.0.30
+  Fix pgi build on izumi
+  Update manage_externals
+
+Changes to User Interface since: 
+  Add ssp_anomaly_forcing script to contrib
+  Improve error message when a ndep file can't be found (tell user what to do, allow -ignore_warnings to override it)
+
+Testing:
+--------
+
+ [PASS means all tests PASS and OK means tests PASS other than expected fails.]
+
+  build-namelist tests:
+
+    cheyenne - PASS
+
+  unit-tests (components/clm/src):
+
+    cheyenne - PASS
+
+  tools-tests (components/clm/test/tools):
+
+    cheyenne - OK
+
+  PTCLM testing (components/clm/tools/shared/PTCLM/test): None
+
+  regular tests (aux_clm):
+
+    cheyenne_intel ---- OK
+    cheyenne_gnu ------ OK
+    izumi_nag --------- OK
+    izumi_pgi --------- OK
+    izumi_intel ------- OK
+
+Summary of Answer changes:
+-------------------------
+
+If the tag used for baseline comparisons was NOT the previous tag, note that here: previous
+
+Changes answers relative to baseline: No bit-for-bit
+
+Detailed list of changes:
+------------------------
+
+Externals being used: update cism and cime
+
+   cism:   cism-release-cesm2.1.2_04
+   rtm:    release-cesm2.0.04
+   mosart: release-cesm2.0.04
+   cime:   cim5.6.32
+   FATES:  sci.1.30.0_api.8.0.0
+   PTCLM:  PTCLM2_20200121
+
+CTSM Tag versions pulled over from master development branch: None
+
+Pull Requests that document the changes (include PR ids): #949
+(https://github.com/ESCOMP/ctsm/pull)
+
+ #949 -- surface dataset creation for 2100-2300 SSP extensions (SSP1-2.6, SSP5-3.4, SSP5-8.5
+
+===============================================================
+===============================================================
 Tag name:  release-clm5.0.30
 Originator(s):  erik (Erik Kluzek,UCAR/TSS,303-497-1326)
 Date: Tue Jan 21 13:50:48 MST 2020
