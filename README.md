@@ -72,7 +72,7 @@ cd ${TOOL}/mksurfdata_map
 ./mksurfdata.pl -res 0.9x1.25 -ssp_rcp SSP3-7.0 -glc_nec 10 -years 2015-2100
 
 
-# download urban and land rawdata from 2015-2100
+# download urban and land raw data from 2015-2100
 ```
 
 ### Error
@@ -99,4 +99,4 @@ For example, after reading the raw data of all land types, the mksurfdata_map ad
 
 Also, the mksurfdara_esmf considers PCT_OCN, but mksurfdata_map doesn't. I wonder if this will change the PCT_URB of coastal grids. These are just two differences between the two tools. It would be difficult to summarize all of their differences. I would recommend you compare the mksurfdat.F90 of the two versions to better understand why they produce different results. 
 
-![difference](/Users/user/Desktop/YuanSun-UoM/CTSM5.0.30_transient_urban/difference.png)
+![difference](./CTSM5.0.30_transient_urban/tools/mksurfdata_map/user_log/difference.png)
